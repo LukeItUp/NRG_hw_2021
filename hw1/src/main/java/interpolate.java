@@ -9,10 +9,10 @@ import javax.vecmath.Point3d;
 
 class shepard_method {
     public static List<Point3d> points = new ArrayList();
-    public static List<Double> point_values = new ArrayList();
+    public static List<Float> point_values = new ArrayList();
 
     public static List<Point3d> points_out = new ArrayList();
-    public static List<Double> points_out_values = new ArrayList();
+    public static List<Float> points_out_values = new ArrayList();
 
     public static float min_x, max_x;
     public static float min_y, max_y;
@@ -29,9 +29,9 @@ class shepard_method {
         max_z = max_vals[2];
         resolutions = in_resolutions;
 
-        double step_x = Math.abs(min_x - max_x)/resolutions[0];
-        double step_y = Math.abs(min_y - max_y)/resolutions[1];
-        double step_z = Math.abs(min_z - max_z)/resolutions[2];
+        float step_x = Math.abs(min_x - max_x)/resolutions[0];
+        float step_y = Math.abs(min_y - max_y)/resolutions[1];
+        float step_z = Math.abs(min_z - max_z)/resolutions[2];
 
         /*
         for (double k=min_z; k<max_z; k+=step_z) {
@@ -48,7 +48,7 @@ class shepard_method {
                 for (int i=0; i < resolutions[0]; i++) {
                     Point3d tmp = new Point3d(min_x + i*step_x, min_y + j*step_y, min_z + k*step_z);
                     points_out.add(tmp);
-                    points_out_values.add(0.0);
+                    points_out_values.add(0.0f);
                     //System.out.printf("%d, %d, %d\n", i,j,k);
                 }
             }
@@ -59,14 +59,14 @@ class shepard_method {
     public void read_from_file(String file_path) {
         String[] data;
         points = new ArrayList<Point3d>();
-        point_values = new ArrayList<Double>();
+        point_values = new ArrayList<Float>();
         try {
             File myObj = new File(file_path);
             Scanner myReader = new Scanner(myObj);
             while (myReader.hasNextLine()) {
                 data = myReader.nextLine().split(" ");
                 points.add(new Point3d(Double.parseDouble(data[0]), Double.parseDouble(data[1]), Double.parseDouble(data[2])));
-                point_values.add(Double.parseDouble(data[3]));
+                point_values.add(Float.parseFloat(data[3]));
             }
             myReader.close();
         } catch (FileNotFoundException e) {
@@ -75,24 +75,24 @@ class shepard_method {
         }
     }
 
-    public void add_point(Point3d point, Double point_value) {
+    public void add_point(Point3d point, Float point_value) {
         points.add(point);
         point_values.add(point_value);
     }
 
-    private static Double weights_basic(int x, int x_k, int p) {
+    private static float weights_basic(int x, int x_k, int p) {
         Double distance = points_out.get(x).distance(points.get(x_k));
-        return 1/Math.pow(distance, p);
+        return (float) (1/Math.pow(distance, p));
     }
 
     public void basic_shepard_method(int p){
         for (int i=0; i<points_out.size(); i++) {
-            Double f_x_up = 0.0;
-            Double f_x_down = 0.0;
+            float f_x_up = 0.0f;
+            float f_x_down = 0.0f;
             for (int j=0; j<points.size(); j++) {
                 if (points_out.get(i).distance(points.get(j)) == 0) {
                     f_x_up = point_values.get(j);
-                    f_x_down = 1.0;
+                    f_x_down = 1.0f;
                     break;
                 }
                 f_x_up += weights_basic(i, j, p) * point_values.get(j);
@@ -102,11 +102,11 @@ class shepard_method {
         }
     }
 
-    private static Double weights_modified(int x, int x_k, Double R) {
+    private static float weights_modified(int x, int x_k, Float R) {
         Double distance = points_out.get(x).distance(points.get(x_k));
         Double up = Math.max(0, R - distance);
         Double down = R * distance;
-        return Math.pow(up/down, 2);
+        return (float) (Math.pow(up/down, 2));
     }
 
     public void modified_shepard_method(float R){
@@ -114,19 +114,19 @@ class shepard_method {
         octree.buildIndex(points);
 
         for (int i=0; i<points_out.size(); i++) {
-            Double f_x_up = 0.0;
-            Double f_x_down = 0.0;
+            Float f_x_up = 0.0f;
+            Float f_x_down = 0.0f;
             try {
                 List<Integer> found = octree.searchAllNeighborsWithinDistance(points_out.get(i), R);
                 for (int j_index=0; j_index<found.size(); j_index++) {
                     int j = found.get(j_index);
                     if (points_out.get(i).distance(points.get(j)) == 0) {
                         f_x_up = point_values.get(j);
-                        f_x_down = 1.0;
+                        f_x_down = 1.0f;
                         break;
                     }
-                    f_x_up += weights_modified(i, j, (double) R) * point_values.get(j);
-                    f_x_down += weights_modified(i, j, (double) R);
+                    f_x_up += weights_modified(i, j, R) * point_values.get(j);
+                    f_x_down += weights_modified(i, j, R);
                 }
                 points_out_values.set(i, f_x_up / f_x_down);
 
@@ -156,9 +156,9 @@ class shepard_method {
     }
 
     public void print_points_out_binary() {
-        for (Double points_out_value : points_out_values) {
+        for (Float points_out_value : points_out_values) {
             try {
-                float tmp = (float) (double) points_out_value;
+                float tmp = (float) points_out_value;
                 ByteBuffer buff = ByteBuffer.allocate(4).putFloat(tmp);
                 System.out.write(buff.array());
             } catch (Exception e) {
@@ -249,7 +249,7 @@ public class interpolate {
             String[] point_data = scnr.nextLine().split(" ");
 
             Point3d tmp_point = new Point3d(Double.parseDouble(point_data[0]), Double.parseDouble(point_data[1]), Double.parseDouble(point_data[2]));
-            Double tmp_point_value = Double.parseDouble(point_data[3]);
+            Float tmp_point_value = Float.parseFloat(point_data[3]);
             sh_m.add_point(tmp_point, tmp_point_value);
         }
 
