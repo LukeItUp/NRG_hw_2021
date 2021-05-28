@@ -258,10 +258,8 @@ public class animate {
 
         for (int i = 0; i < outObjFiles.size(); i++) {
             ObjFile tmp = outObjFiles.get(i);
-            System.out.println(tmp.keyFrame);
-            if (startTimeRange <= tmp.keyFrame && tmp.keyFrame <= endTimeRange) {
-                tmp.writeObj(String.format("./output/out_%04d.obj", i));
-            }
+            System.out.printf("Generated file: ./output/out_%04d.obj @frame %d\n", i, tmp.keyFrame);
+            tmp.writeObj(String.format("./output/out_%04d.obj", i));
         }
 
 
