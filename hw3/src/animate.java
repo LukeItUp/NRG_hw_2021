@@ -183,6 +183,9 @@ public class animate {
     }
 
     public static void endingFrame() {
+        if (Math.abs(endTimeRange - startTimeRange) % frameRate != 0) {
+            return;
+        }
         for(ObjFile obj : kfObjFiles) {
             if (endTimeRange == obj.keyFrame) {
                 outObjFiles.add(obj);
